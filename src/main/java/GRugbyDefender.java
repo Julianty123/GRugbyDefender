@@ -16,16 +16,16 @@ import javafx.scene.text.Text;
 import lc.kra.system.keyboard.GlobalKeyboardHook;
 import lc.kra.system.keyboard.event.GlobalKeyAdapter;
 import lc.kra.system.keyboard.event.GlobalKeyEvent;
-
 import javax.swing.Timer;
 import java.util.*;
 
 @ExtensionInfo(
         Title =  "GRugbyDefender",
-        Description =  "Recharger is by Sirjonasxx",
-        Version =  "0.1",
-        Author =  "Julianty & Sirjonasxx"
+        Description =  "Makes it easier to play the game",
+        Version =  "0.0.2",
+        Author =  "Julianty"
 )
+
 public class GRugbyDefender extends ExtensionForm {
 
     // Sirjonasxx Code Start here! //
@@ -48,29 +48,26 @@ public class GRugbyDefender extends ExtensionForm {
     private volatile int ping = 45;
     private volatile double pingVariation = 10;
     private volatile long latestRoomTick = -1;
-
     private volatile long latestWalkTimestamp = -1;
 
     private volatile boolean rechargerEnabled = false;
-
     private volatile boolean clickthroughEnabled = false;
     // Sirjonasxx Code Finish here! //
 
 
     Map<Integer,HPoint> floorItemsID_HPoint = new HashMap<>();
-    public LinkedList<Integer> listIceCreams = new LinkedList();    // Si se tienen miles de datos sera mas rapido
-    public LinkedList<Integer> listPlayersToFollow = new LinkedList();
-    public LinkedList<String> Id_Name_Index = new LinkedList();
-    public LinkedList<Integer> listLaserDoors = new LinkedList();
-    public LinkedHashMap<Integer, HPoint> userIndex_HPoint = new LinkedHashMap<>(); // Esto fue puesto para retirar un atascamiento pero no tuve exito cuidado con esto
+    public LinkedList<Integer> listIceCreams = new LinkedList<>();    // Si se tienen miles de datos sera mas rapido
+    public LinkedList<Integer> listPlayersToFollow = new LinkedList<>();
+    public LinkedList<Integer> listLaserDoors = new LinkedList<>();
 
-    public boolean openExtension = true;
     public int YourID, Defender_X, Defender_Y, Attacker_X, Attacker_Y;
     public String YourName;
     public String stateLaser1 = "0";    // "0" is closed for defect
     public String stateLaser2 = "0";
-    public int IndexDefender = -1;
-    public int IndexAttacker = -1;
+    public int DefenderIndex = -1;
+    public int AttackerIndex = -1;
+    public int AttackerUserId;
+    public String AttackerUserName;
     public int Iice = -1;
     public int AutoClickX, AutoClickY;
 
@@ -81,20 +78,22 @@ public class GRugbyDefender extends ExtensionForm {
     Timer timer1 = new Timer(1, e -> {
         try {
             // Solo sigue al atacante que agarro el ultimo helado, pero previamente se deben almacenar todos los jugadores del equipo contrario
-            int PositionID = Id_Name_Index.indexOf(String.valueOf(IndexAttacker)) - 2;
-            String UserID = Id_Name_Index.get(PositionID);
-            if(listPlayersToFollow.contains(Integer.parseInt(UserID))){
-                if (radioButtonEast.isSelected())
-                {
+            /*int PositionID = Id_Name_Index.indexOf(String.valueOf(AttackerIndex)) - 2;
+            String UserID = Id_Name_Index.get(PositionID);*/
+            for(UserInformation user: UserInformation.listUserInformation){
+                if(user.getUserIndex() == AttackerIndex){
+                    AttackerUserId = user.getUserId();
+                }
+            }
+
+            if(listPlayersToFollow.contains(AttackerUserId)){
+                if (radioButtonEast.isSelected()){
                     if (Attacker_Y < Defender_Y)
                     {
                         sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER,Defender_X, Attacker_Y));
                     }
-                    /*if (NotYou_X == You_X)
-                    {
-                        Ext.SendToServerAsync(Ext.Out.MoveAvatar, Defender_X, Attacker_Y);
-                    }*/
-                    if (Attacker_Y > Defender_Y)
+                    // if (NotYou_X == You_X) { Ext.SendToServerAsync(Ext.Out.MoveAvatar, Defender_X, Attacker_Y); }
+                    if(Attacker_Y > Defender_Y)
                     {
                         sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, Defender_X, Attacker_Y));
                     }
@@ -106,10 +105,8 @@ public class GRugbyDefender extends ExtensionForm {
                     {
                         sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER,Attacker_X, Defender_Y));
                     }
-                    /*if (NotYou_X == You_X)// Esto es para corregir un bug ahi raro cuando no actualizaba las coordenadas, en el UserUpdate
-                    {
-                        Ext.SendToServerAsync(Ext.Out.MoveAvatar, Attacker_X, Defender_Y);
-                    }*/
+                    /* Esto es para corregir un bug ahi raro cuando no actualizaba las coordenadas, en el UserUpdate
+                    if (NotYou_X == You_X) { Ext.SendToServerAsync(Ext.Out.MoveAvatar, Attacker_X, Defender_Y); } */
                     if (Attacker_X > Defender_X)
                     {
                         sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, Attacker_X, Defender_Y));
@@ -133,26 +130,16 @@ public class GRugbyDefender extends ExtensionForm {
      public static void, respectivamente).
      */
 
-
-    @Override // Runs when extension opens
-    protected void onShow() {
-        /*// Obtiene tu nombre, id, etc...
-        sendToServer(new HPacket("InfoRetrieve", HMessage.Direction.TOSERVER));
-        // Obtiene furnis de piso, de pared y otras cosas sin reiniciar sala
-        sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));
-        // Obtiene TU index, sin reiniciar sala :O
-        sendToServer(new HPacket("AvatarExpression", HMessage.Direction.TOSERVER, 0));
-        openExtension = true;*/
-    }
-
     @Override
-    protected void initExtension() {
+    protected void onShow() {
         // When the extension is installed!
         sendToServer(new HPacket("InfoRetrieve", HMessage.Direction.TOSERVER));//Get your name, your id, etc
         sendToServer(new HPacket("GetHeightMap", HMessage.Direction.TOSERVER));//Get flooritems, wallitems and other stuffs
         sendToServer(new HPacket("AvatarExpression", HMessage.Direction.TOSERVER, 0));// Get your index
-        openExtension = true;
+    }
 
+    @Override
+    protected void initExtension() {
         primaryStage.setOnShowing(s -> { // Cuando se abre la extension se inicia el Hook
             // More information     https://github.com/kristian/system-hook
             // Might throw a UnsatisfiedLinkError if the native library fails to load or a RuntimeException if hooking fails
@@ -209,16 +196,17 @@ public class GRugbyDefender extends ExtensionForm {
                 keyboardHook.shutdownHook(); // Disabled hook
 
                 stateLaser1 = "0";  stateLaser2 = "0";  // "0" is closed for defect
-                Id_Name_Index.clear();  disable();  chkClickthrough.setSelected(false); ClearAll();
+                UserInformation.listUserInformation.clear();    UserInformation.flagListUserId.clear();
+                disable();  chkClickthrough.setSelected(false); ClearAll();
                 sendToClient(new HPacket("YouArePlayingGame", HMessage.Direction.TOCLIENT,chkClickthrough.isSelected()));
             });
         });
 
+        // Response of packet AvatarExpression
         intercept(HMessage.Direction.TOCLIENT, "Expression", hMessage -> {
-            if (openExtension) // Se ejecuta solo una vez, es para evitar algun bug raro...
-            {
-                IndexDefender = hMessage.getPacket().readInteger();   // Se le asigna TU index actual
-                openExtension = false;
+            // First integer is index in room, second is animation id, i think
+            if(primaryStage.isShowing() && DefenderIndex == -1){ // this could avoid any bug
+                DefenderIndex = hMessage.getPacket().readInteger();   // Se le asigna TU index actual
             }
         });
 
@@ -227,14 +215,13 @@ public class GRugbyDefender extends ExtensionForm {
             textDefender.setText("Defender : " + YourName);
         });
 
-        /* Expression y UserObject se ejecutan en diferente orden entonces se intercepta este paquete
-            para evitar bugs */
+        // Expression y UserObject se ejecutan en diferente orden entonces se intercepta este paquete para evitar bugs
         intercept(HMessage.Direction.TOCLIENT, "GetGuestRoomResult", hMessage -> {
-            if(!Id_Name_Index.contains(String.valueOf(YourID))){
+            /*if(!Id_Name_Index.contains(String.valueOf(YourID))){
                 Id_Name_Index.add(String.valueOf(YourID));
                 Id_Name_Index.add(YourName);
-                Id_Name_Index.add(String.valueOf(IndexDefender));
-            }
+                Id_Name_Index.add(String.valueOf(DefenderIndex));
+            }*/
         });
 
         // Intercepts when the user gives you the drink
@@ -261,24 +248,23 @@ public class GRugbyDefender extends ExtensionForm {
                 HPacket hPacket = hMessage.getPacket();
                 HEntity[] roomUsersList = HEntity.parse(hPacket);
                 for (HEntity hEntity: roomUsersList){
-                    if (!Id_Name_Index.contains(String.valueOf(hEntity.getId())))
-                    {
-                        Id_Name_Index.add(String.valueOf(hEntity.getId())); // Add UserID
-                        Id_Name_Index.add(String.valueOf(hEntity.getName()));   // Add UserName
-                        Id_Name_Index.add(String.valueOf(hEntity.getIndex()));  // Add UserIndex
-
-                        userIndex_HPoint.put(hEntity.getIndex(), hEntity.getTile());
-                    }
-                    else
-                    {
-                        int PositionUserID = Id_Name_Index.indexOf(String.valueOf(hEntity.getId())); // Encuentra la posicion del UserID
-                        int PositionUserIndex = PositionUserID + 2;
-                        Id_Name_Index.set(PositionUserIndex, String.valueOf(hEntity.getIndex())); // Le agrega el nuevo Index al usuario correspondiente
-                        if(hEntity.getName().equals(YourName)){
-                            IndexDefender = hEntity.getIndex();
+                    UserInformation userInf = new UserInformation(hEntity.getIndex(), hEntity.getId(), hEntity.getName(), hEntity.getTile());
+                    if(hEntity.getEntityType().equals(HEntityType.HABBO)){ // Verifica que NO sea bot
+                        if(hEntity.getName().equals(YourName)){    // In another room, the index changes
+                            DefenderIndex = hEntity.getIndex();      // The userindex has been restarted
                         }
+                        if(!UserInformation.flagListUserId.contains(hEntity.getId())) {
+                            UserInformation.listUserInformation.add(userInf);
+                            UserInformation.flagListUserId.add(hEntity.getId()); // Bandera para saber si el objeto ya existe
 
-                        userIndex_HPoint.replace(hEntity.getIndex(), hEntity.getTile());
+                            // Antes creaba varias listas para agregar diferentes valores y encontrar sus correspondientes parejas
+                        }
+                        else {
+                            int positionUserId = UserInformation.flagListUserId.indexOf(hEntity.getId()); // Obtiene la posicion de ese userId
+                            UserInformation.listUserInformation.set(positionUserId, userInf); // Actualiza los valores!
+
+                            // Antes con la posicion del objeto en una lista, averiguaba la posiciones de los demas objetos en las otras listas
+                        }
                     }
                 }
             } catch (Exception e) {
@@ -294,26 +280,27 @@ public class GRugbyDefender extends ExtensionForm {
         intercept(HMessage.Direction.TOCLIENT, "UserUpdate", hMessage -> {
             HPacket hPacket = hMessage.getPacket();
             for (HEntityUpdate hEntityUpdate: HEntityUpdate.parse(hPacket)){
+                for(UserInformation user: UserInformation.listUserInformation){
+                    if(user.getUserIndex() == hEntityUpdate.getIndex() && hEntityUpdate.getMovingTo() != null){
+                        user.setUserPosition(hEntityUpdate.getMovingTo()); // Actualiza la posicion de los usuarios seleccionados
+                        break;
+                    }
+                }
                 try{
-                    if (hEntityUpdate.getIndex() == IndexAttacker)
-                    {
+                    if (hEntityUpdate.getIndex() == AttackerIndex) {
                         Attacker_X = hEntityUpdate.getMovingTo().getX();    Attacker_Y = hEntityUpdate.getMovingTo().getY();
                         textAttackerX.setText("x: " + Attacker_X);  textAttackerY.setText("y: " + Attacker_Y);
                         textBodyFacingA.setText(String.valueOf(hEntityUpdate.getBodyFacing()));
                     }
-                    if (hEntityUpdate.getIndex() == IndexDefender)
-                    {
+                    if (hEntityUpdate.getIndex() == DefenderIndex) {
                         Defender_X = hEntityUpdate.getMovingTo().getX();    Defender_Y = hEntityUpdate.getMovingTo().getY();
                         textDefenderX.setText("x: " + Defender_X);   textDefenderY.setText("y: " + Defender_Y);
                         textBodyFacingD.setText(String.valueOf(hEntityUpdate.getBodyFacing()));
-                        System.out.println("x: " + Defender_X + ", y: " + Defender_Y);
 
                         if(((AutoClickX == Defender_X) && AutoClickY == Defender_Y)){
                             timerClick.stop();
                             AutoClickX = 0; AutoClickY = 0;
-                            Platform.runLater(()->{
-                                checkGrabCoord.setText("Grab coord [F8]: (" + AutoClickX + ", " + AutoClickY + ")");
-                            });
+                            Platform.runLater(()-> checkGrabCoord.setText("Grab coord [F8]: (" + AutoClickX + ", " + AutoClickY + ")"));
                             sendToClient(new HPacket("Chat", HMessage.Direction.TOCLIENT, 99999, "The AutoClick has been stopped!", 0, 21, 0, -1));
                         }
 
@@ -335,30 +322,36 @@ public class GRugbyDefender extends ExtensionForm {
 
         intercept(HMessage.Direction.TOCLIENT, "CarryObject", hMessage -> {
             try {
-                int UserIndex = hMessage.getPacket().readInteger(); // Guardo el index del usuario
+                int currentUserIndex = hMessage.getPacket().readInteger(); // Index del usuario que recibio la bebida
                 int HandItemID = hMessage.getPacket().readInteger();
 
-                int PositionIndex = Id_Name_Index.indexOf(String.valueOf(UserIndex)); // Encuentra la posicion del Index
-                int PositionID = PositionIndex - 2; // La posicion de la id seria dos elementos atras
+                for(UserInformation user: UserInformation.listUserInformation){
+                    if(user.getUserIndex() == currentUserIndex){
+                        AttackerUserId = user.getUserId(); // Asigna el userId
+                        AttackerUserName = user.getUserName();  // Asigna el nombre de usuario actual!
+                        break;
+                    }
+                }
 
-                String UserID = Id_Name_Index.get(PositionID); // Obtiene el user id
-                if (listPlayersToFollow.contains(Integer.parseInt(UserID)))
-                {
-                    if (HandItemID == 0) // Es 0 cuando el usuario pasa o suelta la bebida
-                    {
-                        sendToClient(new HPacket("AvatarEffect", HMessage.Direction.TOCLIENT, UserIndex, 0, 0)); // Le quita el efecto al usuario
+                if(listPlayersToFollow.contains(AttackerUserId)){
+                    if (HandItemID == 0){   // 0 cuando el usuario pasa o suelta la bebida
+                        sendToClient(new HPacket("AvatarEffect", HMessage.Direction.TOCLIENT, currentUserIndex, 0, 0)); // Le quita el efecto al usuario
                     }
                     else {
-                        IndexAttacker = UserIndex;
-                        int PositionName = Id_Name_Index.indexOf(String.valueOf(IndexAttacker)) - 1;
-                        textAttacker.setText("Current Attacker : " + Id_Name_Index.get(PositionName));
-                        if (chkRabbitEffect.isSelected())
-                        {
-                            // Added the user effect at user with drink (ClientSide), 68 is the Rabbit Effect
-                            sendToClient(new HPacket("AvatarEffect", HMessage.Direction.TOCLIENT, IndexAttacker, 68, 0));
+                        AttackerIndex = currentUserIndex;   // Actualiza el userIndex
+                        textAttacker.setText("Current Attacker : " + AttackerUserName);
+
+                        if(chkRabbitEffect.isSelected()){   // Added the user effect if have drink (ClientSide), 68 is the Rabbit Effect
+                            sendToClient(new HPacket("AvatarEffect", HMessage.Direction.TOCLIENT, AttackerIndex, 68, 0));
                         }
 
-                        sendToServer(new HPacket("MoveAvatar" , HMessage.Direction.TOSERVER, userIndex_HPoint.get(UserIndex).getX(), Attacker_Y));
+                        for(UserInformation user: UserInformation.listUserInformation){
+                            if(user.getUserIndex() == AttackerIndex){
+                                Attacker_X = user.getUserPosition().getX(); Attacker_Y = user.getUserPosition().getY();
+                                textAttackerX.setText("x: " + Attacker_X);  textAttackerY.setText("y: " + Attacker_Y);
+                                break;
+                            }
+                        }
                     }
                 }
             }catch (IndexOutOfBoundsException ignored){}
@@ -438,9 +431,7 @@ public class GRugbyDefender extends ExtensionForm {
                     listLaserDoors.remove((Integer) laserDoorID);
                     sendToClient(new HPacket("Chat", HMessage.Direction.TOCLIENT, 99999, "Laser door: " + laserDoorID + " has been deleted!", 0, 21, 0, -1));
                 }
-                Platform.runLater(()->{
-                    checkLaserDoor.setText("Select laser door (" + listLaserDoors.size() + ")");
-                });
+                Platform.runLater(()-> checkLaserDoor.setText("Select laser door (" + listLaserDoors.size() + ")"));
                 hMessage.setBlocked(true);
             }
         });
@@ -676,8 +667,8 @@ public class GRugbyDefender extends ExtensionForm {
         //Defender_Y = -1;
         Attacker_X = -1;
         Attacker_Y = -1;
-        // IndexDefender = -1;
-        IndexAttacker = -1;
+        // DefenderIndex = -1;
+        AttackerIndex = -1;
         Iice = -1;
         textAttackerX.setText("x: 0");  textAttackerY.setText("y: 0");
         textAttacker.setText("Current Attacker: NONE");
@@ -689,9 +680,9 @@ public class GRugbyDefender extends ExtensionForm {
 
     public void handleRabbitEffect(ActionEvent actionEvent) {
         if(chkRabbitEffect.isSelected()){
-            sendToClient(new HPacket("AvatarEffect", HMessage.Direction.TOCLIENT, IndexAttacker, 68, 0)); // Add effect
+            sendToClient(new HPacket("AvatarEffect", HMessage.Direction.TOCLIENT, AttackerIndex, 68, 0)); // Add effect
         }else {
-            sendToClient(new HPacket("AvatarEffect", HMessage.Direction.TOCLIENT, IndexAttacker, 0, 0)); // Remove effect
+            sendToClient(new HPacket("AvatarEffect", HMessage.Direction.TOCLIENT, AttackerIndex, 0, 0)); // Remove effect
         }
     }
 }
