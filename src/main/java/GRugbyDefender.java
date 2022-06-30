@@ -22,7 +22,7 @@ import java.util.*;
 @ExtensionInfo(
         Title =  "GRugbyDefender",
         Description =  "Makes it easier to play the game",
-        Version =  "0.0.2",
+        Version =  "1.0.2",
         Author =  "Julianty"
 )
 
@@ -75,11 +75,9 @@ public class GRugbyDefender extends ExtensionForm {
         sendToServer(new HPacket("MoveAvatar" , HMessage.Direction.TOSERVER, AutoClickX, AutoClickY));
     });
 
-    Timer timer1 = new Timer(1, e -> {
+    Timer timer1 = new Timer(1, e -> { // Se inunda el servidor cada 1ms (tener cuidado), aunque se podria usar 560ms pero es lento
         try {
             // Solo sigue al atacante que agarro el ultimo helado, pero previamente se deben almacenar todos los jugadores del equipo contrario
-            /*int PositionID = Id_Name_Index.indexOf(String.valueOf(AttackerIndex)) - 2;
-            String UserID = Id_Name_Index.get(PositionID);*/
             for(UserInformation user: UserInformation.listUserInformation){
                 if(user.getUserIndex() == AttackerIndex){
                     AttackerUserId = user.getUserId();
@@ -88,26 +86,46 @@ public class GRugbyDefender extends ExtensionForm {
 
             if(listPlayersToFollow.contains(AttackerUserId)){
                 if (radioButtonEast.isSelected()){
+                    for (Map.Entry<Integer, HPoint> entry : floorItemsID_HPoint.entrySet()) {   // Evita quedarse estancado en pod (Vertical - Eje Y)
+                        int Furni_Y = entry.getValue().getX();
+                        if(Attacker_Y < Furni_Y && Defender_Y > Furni_Y){
+                            sendToServer(new HPacket("MoveAvatar" , HMessage.Direction.TOSERVER, Defender_X, Furni_Y)); break;
+                        }
+                        else if(Attacker_Y > Furni_Y && Defender_Y < Furni_Y){
+                            sendToServer(new HPacket("MoveAvatar" , HMessage.Direction.TOSERVER, Defender_X, Furni_Y)); break;
+                        }
+                    }
                     if (Attacker_Y < Defender_Y)
                     {
                         sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER,Defender_X, Attacker_Y));
                     }
                     // if (NotYou_X == You_X) { Ext.SendToServerAsync(Ext.Out.MoveAvatar, Defender_X, Attacker_Y); }
-                    if(Attacker_Y > Defender_Y)
+                    else if(Attacker_Y > Defender_Y)
                     {
                         sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, Defender_X, Attacker_Y));
                     }
                 }
 
-                if (radioButtonSouth.isSelected())
+                else if (radioButtonSouth.isSelected())
                 {
+                    for (Map.Entry<Integer, HPoint> entry : floorItemsID_HPoint.entrySet()) {   // Evita quedarse estancado en pod (Horizontal - Eje X)
+                        int Furni_X = entry.getValue().getX();
+                        // Attacker_X + 1 == furni_X && Defender_X - 1 == furni_X
+                        if(Attacker_X < Furni_X && Defender_X > Furni_X){ // Si la silla esta a la derecha del atacante y a la izquierda del defensor (yo)
+                            sendToServer(new HPacket("MoveAvatar" , HMessage.Direction.TOSERVER, Furni_X, Defender_Y)); break;
+                        }
+                        // Attacker_X > furni_X && Defender_X + 1 == furni_X
+                        else if(Attacker_X > Furni_X && Defender_X < Furni_X){ // Si la silla esta a la izquierda del atacante...
+                            sendToServer(new HPacket("MoveAvatar" , HMessage.Direction.TOSERVER, Furni_X, Defender_Y)); break;
+                        }
+                    }
                     if (Attacker_X < Defender_X)
                     {
                         sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER,Attacker_X, Defender_Y));
                     }
                     /* Esto es para corregir un bug ahi raro cuando no actualizaba las coordenadas, en el UserUpdate
                     if (NotYou_X == You_X) { Ext.SendToServerAsync(Ext.Out.MoveAvatar, Attacker_X, Defender_Y); } */
-                    if (Attacker_X > Defender_X)
+                    else if (Attacker_X > Defender_X)
                     {
                         sendToServer(new HPacket("MoveAvatar", HMessage.Direction.TOSERVER, Attacker_X, Defender_Y));
                     }
@@ -361,9 +379,7 @@ public class GRugbyDefender extends ExtensionForm {
             if(checkGrabCoord.isSelected()){
                 AutoClickX = hMessage.getPacket().readInteger();
                 AutoClickY = hMessage.getPacket().readInteger();
-                Platform.runLater(()->{
-                    checkGrabCoord.setText("Grab coord: (" + AutoClickX + ", " +  AutoClickY + ")");
-                });
+                Platform.runLater(()-> checkGrabCoord.setText("Grab coord: (" + AutoClickX + ", " +  AutoClickY + ")"));
                 sendToClient(new HPacket("Chat", HMessage.Direction.TOCLIENT, 99999, "The coord has been record and the " +
                         "AutoClick has started", 0, 21, 0, -1));
                 checkGrabCoord.setSelected(false);
@@ -384,9 +400,7 @@ public class GRugbyDefender extends ExtensionForm {
                     listPlayersToFollow.remove((Integer) UserID);
                     sendToClient(new HPacket("Chat", HMessage.Direction.TOCLIENT, 99999, "The id: " + UserID + " has been deleted!", 0, 21, 0, -1));
                 }
-                Platform.runLater(() ->{
-                    checkPlayersToFollow.setText("Players to Follow (" + listPlayersToFollow.size() + ")");
-                });
+                Platform.runLater(() -> checkPlayersToFollow.setText("Players to Follow (" + listPlayersToFollow.size() + ")"));
                 checkPlayersToFollow.setSelected(false);
             }
             if(radioButFirst.isSelected()){
@@ -416,9 +430,7 @@ public class GRugbyDefender extends ExtensionForm {
                     sendToClient(new HPacket("Chat", HMessage.Direction.TOCLIENT, 99999, "ice cream with id: " + IceCreamID + " deleted!", 0, 21, 0, -1));
                 }
                 checkIceCreams.setSelected(false);
-                Platform.runLater(()->{
-                    checkIceCreams.setText("Select ice creams (" + listIceCreams.size() + ")");
-                });
+                Platform.runLater(()-> checkIceCreams.setText("Select ice creams (" + listIceCreams.size() + ")"));
             }
             if(checkLaserDoor.isSelected()){
                 int laserDoorID = hMessage.getPacket().readInteger();

@@ -63,30 +63,26 @@
                 </Pane>
                 <Pane layoutX="237.0" layoutY="22.0" prefHeight="296.0" prefWidth="208.0"
                       style="-fx-border-color: #888; -fx-border-radius: 25px;">
-                    <children>
-                        <CheckBox fx:id="chkClickthrough" layoutX="48.0" layoutY="20.0"
-                                  mnemonicParsing="false" onAction="#clickthroughClick" prefHeight="31.0"
-                                  prefWidth="122.0" text="Clickthrough" textFill="#000000"/>
-                        <Button fx:id="enableBtn" layoutX="44.0" layoutY="136.0" mnemonicParsing="false"
-                                onAction="#enableClick" prefHeight="25.0" prefWidth="131.0"
-                                text="Enable [Key F7]"/>
-                        <AnchorPane fx:id="statePane" layoutX="42.0" layoutY="74.0" prefHeight="51.0"
-                                    prefWidth="131.0" style="-fx-border-color: #ccc;">
-                            <children>
-                                <Label fx:id="stateLbl" alignment="CENTER" layoutX="1.0" layoutY="17.0"
-                                       prefHeight="17.0" prefWidth="131.0" text="Inactive"/>
-                            </children>
-                        </AnchorPane>
-                        <Label layoutX="61.0" layoutY="51.0" prefHeight="21.0" prefWidth="99.0"
-                               style="-fx-background-color: white;" text=" G-Click state "/>
-                        <CheckBox fx:id="chkAlwaysOnTop" layoutX="70.0" layoutY="247.0"
-                                  mnemonicParsing="false" onAction="#alwaysOnTopClick" selected="true"
-                                  text="Always on top"/>
-                        <CheckBox fx:id="checkIceCreams" layoutX="14.0" layoutY="180.0"
-                                  mnemonicParsing="false" text="Select ice creams (0)"/>
-                        <CheckBox fx:id="checkLaserDoor" layoutX="16.0" layoutY="208.0"
-                                  mnemonicParsing="false" text="Select laser door (0)"/>
-                    </children>
+                    <CheckBox fx:id="chkClickthrough" layoutX="48.0" layoutY="20.0"
+                              mnemonicParsing="false" onAction="#clickthroughClick" prefHeight="31.0"
+                              prefWidth="122.0" text="Clickthrough" textFill="#000000"/>
+                    <Button fx:id="enableBtn" layoutX="44.0" layoutY="136.0" mnemonicParsing="false"
+                            onAction="#enableClick" prefHeight="25.0" prefWidth="131.0"
+                            text="Enable [Key F7]"/>
+                    <AnchorPane fx:id="statePane" layoutX="42.0" layoutY="74.0" prefHeight="51.0"
+                                prefWidth="131.0" style="-fx-border-color: #ccc;">
+                        <Label fx:id="stateLbl" alignment="CENTER" layoutX="1.0" layoutY="17.0"
+                               prefHeight="17.0" prefWidth="131.0" text="Inactive"/>
+                    </AnchorPane>
+                    <Label layoutX="61.0" layoutY="51.0" prefHeight="21.0" prefWidth="99.0"
+                           style="-fx-background-color: white;" text=" G-Click state "/>
+                    <CheckBox fx:id="chkAlwaysOnTop" layoutX="70.0" layoutY="247.0"
+                              mnemonicParsing="false" onAction="#alwaysOnTopClick" selected="true"
+                              text="Always on top"/>
+                    <CheckBox fx:id="checkIceCreams" layoutX="14.0" layoutY="180.0"
+                              mnemonicParsing="false" text="Select ice creams (0)"/>
+                    <CheckBox fx:id="checkLaserDoor" layoutX="16.0" layoutY="208.0"
+                              mnemonicParsing="false" text="Select laser door (0)"/>
                 </Pane>
             </AnchorPane>
         </Tab>

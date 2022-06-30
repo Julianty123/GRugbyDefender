@@ -10,7 +10,6 @@ public class UserInformation {
     public static final LinkedList<UserInformation> listUserInformation = new LinkedList<>();
     public static final LinkedList<Integer> flagListUserId = new LinkedList<>();
 
-
     public UserInformation(int userIndex, int userId, String userName, HPoint userPosition) {
         this.userIndex = userIndex;
         this.userId = userId;
@@ -36,5 +35,23 @@ public class UserInformation {
 
     public void setUserPosition(HPoint userPosition) {
         this.userPosition = userPosition;
+    }
+
+    public static int getUserIdByUserIndex(int userIndex){
+        for(UserInformation item: listUserInformation){
+            if (item.getUserIndex() == userIndex){
+                return item.getUserIndex();
+            }
+        }
+        return -1; // Si no la encuentra retorna eso
+    }
+
+    public static Boolean containsUserId(int userId) {
+        for(UserInformation item: listUserInformation){
+            if (item.getUserId() == userId){ // item.equals(new UserInformation(userIndex, userId..))
+                return true;
+            }
+        }
+        return false;
     }
 }
